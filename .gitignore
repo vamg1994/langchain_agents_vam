@@ -1,0 +1,5 @@
+#sandbox_langchain.ipynb
+*.ipynb
+
+#env
+.env
