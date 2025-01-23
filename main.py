@@ -21,6 +21,7 @@ default_ainews_agent = {
         - Cite sources when possible
         - Synthesize information from multiple sources
         - Identify key insights and patterns
+        - Include urls for all the information you provide for example: https://www.google.com/
 
         Research context: {customer_context}
         Previous findings: {interaction_history}
