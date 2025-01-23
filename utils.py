@@ -37,6 +37,17 @@ def load_agent_template(agent_type):
             Interaction history: {interaction_history}
             
             Analyze the situation and suggest retention strategies."""
+        },
+        "research": {
+            "name": "Research Agent",
+            "description": "Specialized in research and information gathering",
+            "prompt_template": """You are an advanced research agent. Your goal is to gather, 
+            analyze, and synthesize information on given topics.
+            
+            Research context: {customer_context}
+            Previous findings: {interaction_history}
+            
+            Conduct thorough research and provide detailed insights with sources."""
         }
     }
     return templates.get(agent_type, None)

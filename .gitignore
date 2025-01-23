@@ -3,3 +3,10 @@
 
 #env
 .env
+
+#pycache
+__pycache__/
+pycache/
+
+#streamlit
+.streamlit/

@@ -1,5 +1,5 @@
 import streamlit as st
-from langchain_community.chat_models import ChatOpenAI
+from langchain_community.chat_models import ChatOpenAI, ChatPerplexity
 from langchain_core.prompts import PromptTemplate
 import json
 
@@ -55,13 +55,39 @@ def create_churn_prevention_template():
         }"""
     }
 
+def create_research_agent_template():
+    return {
+        "name": "Research Agent",
+        "description": "Specialized in research and information gathering",
+        "prompt_template": """You are an advanced research agent powered by Perplexity AI, focused on gathering and analyzing information.
+        Your responses should be in JSON format.
+
+        Guidelines:
+        - Conduct thorough research on given topics
+        - Provide accurate and up-to-date information
+        - Cite sources when possible
+        - Synthesize information from multiple sources
+        - Identify key insights and patterns
+
+        Research context: {customer_context}
+        Previous findings: {interaction_history}
+
+        Respond in JSON format with:
+        {
+            "response": "Your research findings and analysis",
+            "key_insights": ["List of main insights"],
+            "sources": ["List of relevant sources"],
+            "follow_up_areas": ["Suggested areas for further research"]
+        }"""
+    }
+
 def render_agent_creation():
     st.header("Create New AI Agent")
 
     # Agent type selection
     agent_type = st.selectbox(
         "Select Agent Type",
-        ["Sales Agent", "Churn Prevention Agent"]
+        ["Sales Agent", "Churn Prevention Agent", "Research Agent"]
     )
 
     # Agent configuration form
@@ -69,7 +95,24 @@ def render_agent_creation():
         agent_name = st.text_input("Agent Name")
 
         # Custom parameters based on agent type
-        if agent_type == "Sales Agent":
+        if agent_type == "Research Agent":
+            research_topics = st.text_area(
+                "Research Topics",
+                help="Enter key topics or areas of focus"
+            )
+            research_depth = st.slider(
+                "Research Depth",
+                min_value=1,
+                max_value=5,
+                value=3,
+                help="1: Basic overview, 5: Deep analysis"
+            )
+            source_requirements = st.multiselect(
+                "Source Requirements",
+                ["Academic", "News", "Industry Reports", "Social Media", "Patents"]
+            )
+            template = create_research_agent_template()
+        elif agent_type == "Sales Agent":
             product_knowledge = st.text_area(
                 "Product Knowledge Base",
                 help="Enter key product information and selling points"
@@ -79,7 +122,6 @@ def render_agent_creation():
                 ["Cross-selling", "Upselling", "Bundle Offers", "Seasonal Promotions"]
             )
             template = create_sales_agent_template()
-
         else:  # Churn Prevention Agent
             churn_indicators = st.text_area(
                 "Churn Indicators",
@@ -103,7 +145,13 @@ def render_agent_creation():
         if submitted and agent_name:
             # Initialize parameters based on agent type
             parameters = {}
-            if agent_type == "Sales Agent":
+            if agent_type == "Research Agent":
+                parameters = {
+                    "research_topics": research_topics,
+                    "research_depth": research_depth,
+                    "source_requirements": source_requirements,
+                }
+            elif agent_type == "Sales Agent":
                 parameters = {
                     "product_knowledge": product_knowledge,
                     "sales_strategies": sales_strategies,

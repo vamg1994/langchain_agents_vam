@@ -3,10 +3,17 @@ from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 import json
 from data_processor import get_customer_data, render_data_upload
+from langchain_community.chat_models import ChatPerplexity
+import os
 
 def render_chat_page():
     """Render the chat interface page"""
     st.header("Chat Interface")
+
+    # Ensure API keys are set
+    if "PPLX_API_KEY" not in os.environ:
+        st.error("Please set your Perplexity API key in the environment variables (PPLX_API_KEY)")
+        return
 
     # Data Upload Section
     with st.expander("Upload Customer Data"):
@@ -14,14 +21,14 @@ def render_chat_page():
 
     # Agent selection
     if not st.session_state.agents:
-        st.warning("Please create an agent first in the Agent Creation section.")
+        st.warning("No agents available. Please create an agent first.")
+        if st.button("Go to Agent Creation"):
+            st.session_state.current_page = "agent_creation"
+            st.rerun()
         return
 
-    selected_agent = st.selectbox(
-        "Select Agent",
-        options=st.session_state.agents,
-        format_func=lambda x: f"{x['name']} ({x['type']})"
-    )
+    selected_agent_name = st.selectbox("Select Agent", [agent["name"] for agent in st.session_state.agents])
+    selected_agent = next(agent for agent in st.session_state.agents if agent["name"] == selected_agent_name)
 
     # Customer Context
     customer_id = st.text_input("Enter Customer ID", help="Enter the ID of the customer you want to analyze")
@@ -30,13 +37,23 @@ def render_chat_page():
     if customer_id and not customer_data:
         st.warning("Customer not found. Please check the ID or upload customer data.")
 
-    # Initialize chat model
-    # the newest OpenAI model is "gpt-4o" which was released May 13, 2024.
-    chat_model = ChatOpenAI(
-        model="gpt-4o",
-        temperature=0.7,
-        response_format={"type": "json_object"}
-    )
+    # Initialize chat model based on agent type
+    if selected_agent["type"] == "Research Agent":
+        try:
+            chat_model = ChatPerplexity(
+                api_key=os.environ["PPLX_API_KEY"],
+                temperature=0.7,
+                model="sonar"  # Updated model name
+            )
+        except Exception as e:
+            st.error(f"Error initializing Perplexity chat model: {str(e)}")
+            return
+    else:
+        chat_model = ChatOpenAI(
+            model="gpt-4",
+            temperature=0.7,
+            response_format={"type": "json_object"}
+        )
 
     # Chat interface
     if "messages" not in st.session_state:
@@ -100,4 +117,4 @@ def render_chat_page():
     # Clear chat button
     if st.button("Clear Chat"):
         st.session_state.messages = []
-        st.experimental_rerun()
+        st.rerun()
